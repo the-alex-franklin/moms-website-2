@@ -1,14 +1,14 @@
 [
   {
     "src": "/photos/1.jpg",
-    "caption": "Posture coaching"
-  },
-  {
-    "src": "/photos/2.jpg",
     "caption": "Mobility work"
   },
   {
+    "src": "/photos/2.jpg",
+    "caption": "Strength coaching"
+  },
+  {
     "src": "/photos/3.jpg",
-    "caption": "Strength training"
+    "caption": "Posture training"
   }
 ]
