@@ -8,6 +8,7 @@ export default defineConfig({
     react(),
     unocss({
       configFile: "uno.config.ts",
+      mode: "per-module",
     }) as PluginOption,
   ],
 });
