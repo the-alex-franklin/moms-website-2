@@ -1,15 +1,15 @@
-import { Hero } from '../sections/Hero'
-import { Services } from '../sections/Services'
-import { Gallery } from '../sections/Gallery'
-import { Contact } from '../sections/Contact'
+import { Hero } from "../sections/Hero";
+import { Services } from "../sections/Services";
+import { Contact } from "../sections/Contact";
+import { About } from "../sections/About";
 
-export function Home(){
+export function Home() {
   return (
     <main>
       <Hero />
       <Services />
-      <Gallery />
+      <About photoSrc="/profile.jpg" />
       <Contact />
     </main>
-  )
+  );
 }

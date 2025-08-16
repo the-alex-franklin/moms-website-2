@@ -1,7 +1,7 @@
-export function Header(){
+export function Header() {
   return (
     <header className="site-header">
-      <div className="container header-row">
+      <div className="container p-0 mx-12 header-row">
         <div className="brand">
           <span className="logo">W</span>
           <div className="brand-text">
@@ -9,8 +9,7 @@ export function Header(){
             <span className="tag">Physical Therapy</span>
           </div>
         </div>
-        <a className="cta" href="#contact">Book</a>
       </div>
     </header>
-  )
+  );
 }

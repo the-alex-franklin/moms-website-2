@@ -1,17 +1,20 @@
-export function Hero(){
+export function Hero() {
   return (
-    <section className="hero">
-      <div className="container hero-grid">
-        <div className="hero-copy">
-          <h1>Move freely.<br/>Live comfortably.</h1>
-          <p>One-on-one physical therapy with thoughtful, evidence-based care.</p>
-          <a className="btn" href="#contact">Schedule a session</a>
-        </div>
-        <div className="hero-image-wrap">
-          <img src="/hero.jpg" alt="Therapist working with client" className="hero-image"/>
-          <div className="badge">Personalized · Gentle · Effective</div>
-        </div>
+    <section className="relative flex items-center justify-center text-center h-[80vh] bg-[url('/hero.jpg')] bg-cover bg-[position:0_42.5%]">
+      <div className="absolute inset-0 bg-black/40"></div>
+
+      <div className="relative z-10 max-w-[700px] px-4 text-white">
+        <h1 className="text-white text-5xl font-bold font-calli mb-4">
+          Welcome
+        </h1>
+        <p className="text-2xl mb-8 font-calli">In-home Physical Therapy</p>
+        <a
+          href="#cta"
+          className="bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-6 rounded"
+        >
+          Call to Action
+        </a>
       </div>
     </section>
-  )
+  );
 }
