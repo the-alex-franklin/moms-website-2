@@ -13,13 +13,26 @@
   </head>
   <body>
     <div id="root"></div>
-    <form name="contact" data-netlify="true" netlify-honeypot="company" hidden>
-      <input type="text" name="name" />
-      <input type="email" name="email" />
-      <input type="text" name="phone" />
-      <textarea name="message"></textarea>
-      <input type="text" name="company" />
+    <form name="contact" method="POST" data-netlify="true" netlify-honeypot="bot-field">
+      <input type="hidden" name="form-name" value="contact" />
+
+      <p hidden>
+        <label> Don’t fill this out: <input name="bot-field" /> </label>
+      </p>
+
+      <p>
+        <label>Name <input type="text" name="name" required /></label>
+      </p>
+      <p>
+        <label>Email <input type="email" name="email" required /></label>
+      </p>
+      <p>
+        <label>Message <textarea name="message" required></textarea></label>
+      </p>
+
+      <p><button type="submit">Send</button></p>
     </form>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

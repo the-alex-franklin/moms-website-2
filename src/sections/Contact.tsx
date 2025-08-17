@@ -1,153 +1,179 @@
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
-type Status = "idle" | "loading" | "success" | "error";
+type SendState = { kind: "idle" } | { kind: "loading" } | { kind: "success" } | { kind: "error"; message: string };
 
-function encode(data: Record<string, string>) {
-  return Object.entries(data)
-    .map(([k, v]) => encodeURIComponent(k) + "=" + encodeURIComponent(v ?? ""))
-    .join("&");
-}
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
 
 export function Contact() {
-  const [status, setStatus] = useState<Status>("idle");
-  const [error, setError] = useState<string | null>(null);
+  const [state, setState] = useState<SendState>({ kind: "idle" });
 
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setStatus("loading");
-    setError(null);
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    message: "",
+    website: "", // honeypot
+  });
 
-    const form = e.currentTarget;
-    const fd = new FormData(form);
-    const data = Object.fromEntries(fd) as Record<string, string>;
+  const isValid = useMemo(() => {
+    if (!form.name.trim()) return false;
+    if (!emailRegex.test(form.email.trim())) return false;
+    if (form.message.trim().length < 5) return false;
+    if (form.website.trim().length > 0) return false; // honeypot
+    return true;
+  }, [form]);
 
-    // Honeypot: if bots fill this, silently succeed
-    if (data.company) {
-      setStatus("success");
-      form.reset();
+  const onChange = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setState((s) => (s.kind === "error" ? { kind: "idle" } : s));
+    setForm((prev) => ({ ...prev, [key]: e.target.value }));
+  };
 
-      return;
-    }
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      if (!isValid) {
+        setState({
+          kind: "error",
+          message: "Please fill out all fields correctly.",
+        });
+        return;
+      }
+      if (form.website.trim()) {
+        setState({ kind: "success" }); // bot trap
+        return;
+      }
 
-    try {
-      const res = await fetch("/", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: encode({
-          "form-name": "contact", // must match the hidden blueprint form's name
-          ...data,
-        }),
-      });
+      setState({ kind: "loading" });
+      try {
+        const data = new FormData();
+        data.append("form-name", "contact");
+        data.append("name", form.name.trim());
+        data.append("email", form.email.trim());
+        data.append("message", form.message.trim());
 
-      if (!res.ok) throw new Error(`Netlify Forms error: ${res.status}`);
-      setStatus("success");
-      form.reset();
-    } catch (err: any) {
-      setStatus("error");
-      setError(err?.message || "Something went wrong. Please try again.");
-    }
-  }
+        await fetch("/", {
+          method: "POST",
+          body: new URLSearchParams(data as any).toString(),
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        });
+
+        setState({ kind: "success" });
+        setForm({ name: "", email: "", message: "", website: "" });
+      } catch (err: any) {
+        setState({
+          kind: "error",
+          message: err?.message || "Something went wrong. Please try again.",
+        });
+      }
+    },
+    [form, isValid],
+  );
 
   return (
-    <section id="contact" className="max-w-4xl mx-auto px-4 my-16">
-      <header className="mb-6">
-        <h2 className="text-2xl font-bold">Get in touch</h2>
-        <p className="text-gray-600">
-          Have a question or want to book? Send a message below.
-        </p>
-      </header>
+    <main className="mx-auto max-w-2xl px-4 py-12">
+      <h1 className="text-3xl font-semibold tracking-tight">Contact</h1>
+      <p className="mt-2 text-neutral-600">
+        Have a question or want to book a session? Send a message and we’ll get back to you.
+      </p>
 
-      {status === "success" ? (
-        <div
-          role="status"
-          aria-live="polite"
-          className="rounded-lg bg-green-50 text-green-900 p-4"
-        >
-          <p className="font-medium">Thanks! Your message has been sent.</p>
-          <p className="text-sm opacity-80">We’ll get back to you shortly.</p>
-        </div>
-      ) : (
-        <form
-          onSubmit={onSubmit}
-          name="contact"
-          data-netlify="true"
-          netlify-honeypot="company"
-          className="grid gap-4"
-        >
-          {/* Honeypot (hidden field bots will fill) */}
+      <form
+        name="contact"
+        method="POST"
+        data-netlify="true"
+        netlify-honeypot="website"
+        onSubmit={handleSubmit}
+        className="mt-8 space-y-4"
+        noValidate
+      >
+        <input type="hidden" name="form-name" value="contact" />
+
+        {/* Honeypot */}
+        <div className="hidden">
+          <label htmlFor="website">Website</label>
           <input
-            type="text"
-            name="company"
-            tabIndex={-1}
+            id="website"
+            name="website"
+            value={form.website}
+            onChange={onChange("website")}
             autoComplete="off"
-            className="hidden"
+            tabIndex={-1}
           />
+        </div>
 
-          <div className="grid md:grid-cols-2 gap-4">
-            <label className="grid gap-1">
-              <span className="text-sm font-medium">Name</span>
-              <input
-                name="name"
-                required
-                className="rounded-lg border border-gray-300 px-3 py-2 outline-none focus:(ring-2 ring-gray-400 border-gray-400)"
-                placeholder="Your name"
-              />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="flex flex-col">
+            <label htmlFor="name" className="mb-1 text-sm font-medium">
+              Name
             </label>
-
-            <label className="grid gap-1">
-              <span className="text-sm font-medium">Email</span>
-              <input
-                name="email"
-                type="email"
-                required
-                className="rounded-lg border border-gray-300 px-3 py-2 outline-none focus:(ring-2 ring-gray-400 border-gray-400)"
-                placeholder="you@example.com"
-              />
-            </label>
-          </div>
-
-          <label className="grid gap-1">
-            <span className="text-sm font-medium">Phone (optional)</span>
             <input
-              name="phone"
-              className="rounded-lg border border-gray-300 px-3 py-2 outline-none focus:(ring-2 ring-gray-400 border-gray-400)"
-              placeholder="(555) 555-5555"
-            />
-          </label>
-
-          <label className="grid gap-1">
-            <span className="text-sm font-medium">Message</span>
-            <textarea
-              name="message"
+              id="name"
+              name="name"
+              type="text"
+              autoComplete="name"
+              className="rounded-xl border px-3 py-2 outline-none focus:ring"
+              value={form.name}
+              onChange={onChange("name")}
               required
-              rows={5}
-              className="rounded-lg border border-gray-300 px-3 py-2 resize-y outline-none focus:(ring-2 ring-gray-400 border-gray-400)"
-              placeholder="Tell us a bit about what you need…"
             />
-          </label>
-
-          {status === "error" && (
-            <p className="text-red-600 text-sm" role="alert">
-              {error}
-            </p>
-          )}
-
-          <div className="mt-2">
-            <button
-              type="submit"
-              disabled={status === "loading"}
-              className="inline-flex items-center justify-center rounded-lg bg-gray-900 text-white px-5 py-2.5 hover:bg-gray-800 disabled:opacity-60"
-            >
-              {status === "loading" ? "Sending…" : "Send message"}
-            </button>
           </div>
 
-          <p className="text-xs text-gray-500">
-            We’ll never share your information. By submitting, you consent to be
-            contacted about your inquiry.
-          </p>
-        </form>
-      )}
-    </section>
+          <div className="flex flex-col">
+            <label htmlFor="email" className="mb-1 text-sm font-medium">
+              Email
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              className="rounded-xl border px-3 py-2 outline-none focus:ring"
+              value={form.email}
+              onChange={onChange("email")}
+              required
+            />
+            {!emailRegex.test(form.email) && form.email.length > 0 ? (
+              <span className="mt-1 text-xs text-red-600">Enter a valid email</span>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="flex flex-col">
+          <label htmlFor="message" className="mb-1 text-sm font-medium">
+            Message
+          </label>
+          <textarea
+            id="message"
+            name="message"
+            rows={6}
+            className="rounded-xl border px-3 py-2 outline-none focus:ring"
+            value={form.message}
+            onChange={onChange("message")}
+            required
+          />
+          {form.message.trim().length > 0 && form.message.trim().length < 5 ? (
+            <span className="mt-1 text-xs text-red-600">Message is too short</span>
+          ) : null}
+        </div>
+
+        <div className="pt-2">
+          <button
+            type="submit"
+            disabled={state.kind === "loading" || !isValid}
+            className="inline-flex items-center rounded-xl bg-black px-4 py-2 text-white disabled:opacity-50"
+          >
+            {state.kind === "loading" ? "Sending..." : "Send message"}
+          </button>
+        </div>
+
+        {state.kind === "error" ? <p className="text-sm text-red-600">{state.message}</p> : null}
+
+        {state.kind === "success" ? (
+          <p className="text-sm text-green-700">Thanks. Your message has been sent.</p>
+        ) : null}
+      </form>
+
+      <section className="mt-12 text-sm text-neutral-500">
+        <p>By submitting this form you agree to be contacted at the email you provided for follow up.</p>
+      </section>
+    </main>
   );
 }

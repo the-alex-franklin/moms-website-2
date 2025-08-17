@@ -1,9 +1,9 @@
 // eslint.config.js
 import js from "@eslint/js";
+import eslintPluginPrettier from "eslint-plugin-prettier";
 import reactPlugin from "eslint-plugin-react";
 import hooksPlugin from "eslint-plugin-react-hooks";
 import globals from "globals";
-import tseslint from "typescript-eslint";
 
 /**
  * Utility to convert all rule severities to "warn" except for actual error rules.
@@ -14,8 +14,7 @@ function warnEverything(rules) {
     if (typeof setting === "string") {
       result[rule] = setting === "off" ? "off" : "warn";
     } else if (Array.isArray(setting)) {
-      result[rule] =
-        setting[0] === "off" ? "off" : ["warn", ...setting.slice(1)];
+      result[rule] = setting[0] === "off" ? "off" : ["warn", ...setting.slice(1)];
     } else {
       result[rule] = "warn";
     }
@@ -39,7 +38,7 @@ export default [
     plugins: {
       react: reactPlugin,
       "react-hooks": hooksPlugin,
-      "@typescript-eslint": tseslint.plugin,
+      prettier: eslintPluginPrettier,
     },
     rules: {
       // Start with the recommended rules as warn

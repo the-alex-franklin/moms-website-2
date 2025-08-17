@@ -1,57 +1,75 @@
-import type { Handler } from "@netlify/functions";
+// netlify/functions/contact.js
+import nodemailer from "nodemailer";
 
-// Optional: quick naive email check
-const isEmail = (s: string) => /\S+@\S+\.\S+/.test(s);
+const json = (code: number, obj: any) => ({ statusCode: code, body: JSON.stringify(obj) });
 
-export const handler: Handler = async (event) => {
-  if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: "Method not allowed" };
+export async function handler(event) {
+  if (event.httpMethod !== "POST") return json(405, { error: "Method Not Allowed" });
+
+  try {
+    const data = JSON.parse(event.body || "{}");
+    const {
+      name = "",
+      email = "",
+      message = "",
+      website = "", // honeypot
+      ts = 0, // optional time gate: ms since epoch from the client
+    } = data;
+
+    // 1) Honeypot
+    if (website) return json(200, { ok: true });
+
+    // 2) Minimal validation
+    if (!name || !message) return json(400, { error: "Missing fields" });
+
+    // 3) Basic time gate (reject instant bot submits if client included ts)
+    if (Number(ts) > 0 && Date.now() - Number(ts) < 2000) {
+      return json(200, { ok: true });
+    }
+
+    // 4) Create transporter for Gmail SMTP
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST, // smtp.gmail.com
+      port: Number(process.env.SMTP_PORT) || 465, // 465 SSL or 587 STARTTLS
+      secure: (process.env.SMTP_SECURE ?? "true") === "true",
+      auth: {
+        user: process.env.SMTP_USER, // elizabethf@gmail.com
+        pass: process.env.SMTP_PASS, // 16-char App Password
+      },
+    });
+
+    // 5) Send. From must match SMTP_USER.
+    await transporter.sendMail({
+      from: `"Mom’s Website" <${process.env.SMTP_USER}>`,
+      to: process.env.TO_EMAIL || process.env.SMTP_USER,
+      subject: "New contact form submission",
+      text: `Name: ${name}\n` + (email ? `Email: ${email}\n` : "") + `\n${message}`,
+      html: `
+        <p><strong>Name:</strong> ${escapeHtml(name)}</p>
+        ${email ? `<p><strong>Email:</strong> ${escapeHtml(email)}</p>` : ""}
+        <p><strong>Message:</strong></p>
+        <p>${escapeHtml(message).replace(/\n/g, "<br>")}</p>
+      `,
+    });
+
+    return json(200, { ok: true });
+  } catch (err) {
+    // Do not leak details to client
+    return json(500, { error: "Email send failed" });
   }
+}
 
-  const body = JSON.parse(event.body || "{}");
-  const { name, email, phone = "", message, company } = body;
-
-  // Honeypot: if bots fill the hidden 'company' field, pretend success
-  if (company) return ok();
-
-  if (!name || !email || !message || !isEmail(email)) {
-    return json(400, { error: "Missing or invalid fields" });
-  }
-
-  // Send via Resend (uses server-side env vars)
-  const resp = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: process.env.CONTACT_FROM, // e.g. "Website <noreply@yourdomain.com>"
-      to: [process.env.CONTACT_TO!], // your inbox
-      reply_to: email,
-      subject: `New contact from ${name}`,
-      text: `Name: ${name}
-Email: ${email}
-Phone: ${phone}
-
-Message:
-${message}`,
-    }),
-  });
-
-  if (!resp.ok) {
-    const detail = await resp.text();
-
-    return json(500, { error: "Email send failed", detail });
-  }
-
-  return ok();
-};
-
-// helpers
-const ok = () => json(200, { ok: true });
-const json = (statusCode: number, data: unknown) => ({
-  statusCode,
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(data),
-});
+// Tiny HTML escape to avoid HTML injection in the email body
+function escapeHtml(s) {
+  return String(s).replace(
+    /[&<>"']/g,
+    (c) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      }[c]),
+  );
+}
