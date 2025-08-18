@@ -1,7 +1,7 @@
 export function Header() {
   return (
     <header className="site-header">
-      <div className="container header-row">
+      <div className="container header-row px-4 sm:px-0!">
         <div className="brand">
           <span className="logo">W</span>
           <div className="brand-text">

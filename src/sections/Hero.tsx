@@ -1,19 +1,11 @@
 export function Hero() {
   return (
-    <section className="relative flex items-center justify-center text-center h-[80vh] bg-[url('/hero.jpg')] bg-cover bg-[position:0_42.5%]">
+    <section className="relative flex items-end sm:items-center justify-center text-center h-[80vw] bg-[url('/hero.jpg')] bg-cover bg-[position:0_35%] overflow-hidden">
       <div className="absolute inset-0 bg-black/40"></div>
 
-      <div className="relative z-10 max-w-[700px] px-4 text-white">
-        <h1 className="text-white text-5xl font-bold font-calli mb-4">
-          Whim Therapy
-        </h1>
+      <div className="flex flex-col relative px-4 z-10 max-w-[700px] text-white translate-y-24">
+        <h1 className="text-white text-5xl font-bold font-calli mb-4">Whim Therapy</h1>
         <p className="text-2xl mb-8 font-calli">In-home physical therapy</p>
-        <a
-          href="#cta"
-          className="bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-6 rounded"
-        >
-          Call to Action
-        </a>
       </div>
     </section>
   );
