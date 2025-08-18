@@ -8,7 +8,7 @@ type AboutProps = {
 export function About({ photoSrc, name = "About Me", heading = "Meet Your Therapist", children }: AboutProps) {
   return (
     <section id="about" className="container mx-auto my-16 px-4">
-      <div className="flex flex-col items-center gap-8 md:flex-row md:items-start">
+      <div className="flex flex-col-reverse items-center gap-4 md:flex-row">
         {/* Photo */}
         <figure
           className="flex-shrink-0 w-40 h-40 sm:w-56 sm:h-56 md:w-64 md:h-64 

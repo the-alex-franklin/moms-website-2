@@ -83,7 +83,7 @@ export function Contact() {
         <button
           type="submit"
           disabled={status === "loading"}
-          className="self-center w-full sm:max-w-[60%] h-14 p-2 rounded-xl border  bg-[#f0ebe3] hover:bg-[#d9cfc0]  border-[#e0dcd5] focus:ring-[#e0dcd5] text-gray-800 transition focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50"
+          className="self-center w-full sm:max-w-[60%] h-14 p-2 rounded-xl border font-calli text-3xl bg-[#f0ebe3] hover:bg-[#d9cfc0]  border-[#e0dcd5] focus:ring-[#e0dcd5] text-gray-800 transition focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {status === "loading" ? "Sending..." : "Send Message"}
         </button>
