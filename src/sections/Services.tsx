@@ -18,7 +18,7 @@ export function Services() {
     <section className="section">
       <div className="container">
         <h2 className="section-title">Services</h2>
-        <ul className="card-grid">
+        <ul className="flex gap-6 list-none p-0">
           {items.map((it, i) => (
             <li className="card" key={i}>
               <h3>{it.title}</h3>
